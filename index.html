@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>CotizApp Pro - Servicios Técnicos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+   <!-- Librerías necesarias para PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Pantalla de login -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-tools"></i>
+                <h2>CotizApp Pro</h2>
+                <p>Victor Enrique Tuz Dzidz</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required placeholder="tu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+                </button>
+                <button type="button" id="showRegisterBtn" class="btn-secondary btn-block">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </button>
+            </form>
+            <form id="registerForm" style="display:none;">
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="regNombre" required placeholder="Tu nombre">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" required placeholder="tu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="regPassword" required placeholder="mínimo 4 caracteres">
+                </div>
+                <button type="submit" class="btn-primary btn-block">
+                    <i class="fas fa-user-check"></i> Registrarse
+                </button>
+                <button type="button" id="showLoginBtn" class="btn-secondary btn-block">
+                    <i class="fas fa-arrow-left"></i> Volver a inicio
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App principal (oculta hasta login) -->
+    <div id="appContainer" style="display:none;">
+        <div class="app-container">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo-area">
+                    <h1><i class="fas fa-tools"></i> CotizApp Pro</h1>
+                    <p>Victor Enrique Tuz Dzidz | Tel: 9831860555</p>
+                </div>
+                <div class="header-actions">
+                    <div class="stats-badge" id="statsPanel">
+                        <i class="fas fa-chart-line"></i> Cargando...
+                    </div>
+                    <button id="logoutBtn" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </button>
+                </div>
+            </div>
+
+            <div class="two-columns">
+                <!-- COLUMNA IZQUIERDA: FORMULARIO -->
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-file-alt"></i> Nueva Cotización
+                    </div>
+                    
+                    <!-- Datos del cliente -->
+                    <div class="form-group">
+                        <label>Nombre del cliente *</label>
+                        <input type="text" id="clienteNombre" placeholder="Ej: Juan Pérez">
+                    </div>
+                    <div class="row-flex">
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="text" id="clienteTelefono">
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <input type="text" id="clienteDireccion">
+                        </div>
+                    </div>
+                    
+                    <!-- Tipo de trabajo -->
+                    <div class="form-group">
+                        <label>Tipo de trabajo</label>
+                        <select id="tipoTrabajo">
+                            <option value="electricidad">⚡ Electricidad</option>
+                            <option value="plomeria">🚰 Plomería</option>
+                            <option value="climas">❄️ Aire acondicionado (Climas)</option>
+                            <option value="otros">🛠️ Otros</option>
+                        </select>
+                    </div>
+                    
+                    <div id="otrosInput" style="display:none;" class="form-group">
+                        <label>Especificar trabajo</label>
+                        <input type="text" id="otrosEspecificar" placeholder="Ej: Reparación general">
+                    </div>
+
+                    <!-- Sección dinámica según tipo de trabajo -->
+                    <div id="seccionEspecifica"></div>
+
+                    <!-- Trabajos extras generales -->
+                    <div class="extras-section">
+                        <div class="card-title" style="font-size:1.1rem; margin-top:10px">
+                            <i class="fas fa-plus-circle"></i> Trabajos adicionales
+                        </div>
+                        <table class="extras-table">
+                            <thead>
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th>Cant.</th>
+                                    <th>Precio unit.</th>
+                                    <th>Total</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="extrasList"></tbody>
+                        </table>
+                        <button id="agregarExtraBtn" class="btn-secondary">
+                            <i class="fas fa-plus"></i> Agregar trabajo extra
+                        </button>
+                    </div>
+
+                    <!-- Resumen de costos -->
+                    <div class="total-resumen">
+                        <div class="resumen-line">
+                            <span>Subtotal</span>
+                            <span id="subtotalDisplay">$0</span>
+                        </div>
+                        <div class="resumen-line">
+                            <span>Descuento (%)</span>
+                            <input type="number" id="descuentoPorcentaje" value="0" step="1" style="width:80px; text-align:center;">
+                        </div>
+                        <div class="resumen-line total-final">
+                            <span>TOTAL FINAL</span>
+                            <span id="totalFinalDisplay">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- Notas y condiciones -->
+                    <div class="form-group">
+                        <label>Notas / condiciones</label>
+                        <textarea id="notasCondiciones" rows="2">Válido por 15 días. Instalación garantizada por 6 meses.</textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="guardarCotizacionBtn">
+                            <i class="fas fa-save"></i> Guardar cotización
+                        </button>
+                        <button id="duplicarDesdeFormBtn" class="btn-secondary">
+                            <i class="fas fa-copy"></i> Duplicar actual
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COLUMNA DERECHA: VISTA PREVIA -->
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-eye"></i> Vista previa / Factura
+                    </div>
+                    <div id="vistaPreviaContainer" class="preview-invoice">
+                        <div style="text-align:center; color:#aaa;">Complete los datos para ver la vista previa...</div>
+                    </div>
+                    <div class="action-buttons" style="margin-top:20px;">
+                        <button id="exportarPDFBtn">
+                            <i class="fas fa-file-pdf"></i> Exportar a PDF
+                        </button>
+                        <button id="compartirWhatsAppBtn" class="btn-secondary">
+                            <i class="fab fa-whatsapp"></i> Compartir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LISTA DE COTIZACIONES GUARDADAS -->
+            <div class="card quotes-list">
+                <div class="card-title">
+                    <i class="fas fa-archive"></i> Mis cotizaciones
+                </div>
+                <div id="listaCotizaciones"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
